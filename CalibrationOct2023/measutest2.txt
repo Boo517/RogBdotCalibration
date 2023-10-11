@@ -1,0 +1,2 @@
+Measurements        Value    Mean       Minimum  Maximum  Std. Dev.  
+Area(Ch1)           -1.117µVs-1.1169638µ-1.117µ  -1.117µ  0.0        
