@@ -1,0 +1,5 @@
+Example: 100623s1c1b1_0
+Meaning: First shot taken October 6, 2023, first o-scope channel, testing Bertha bdot 1 at 0 degrees (full signal)
+Format: [date]s[shot#]c[o-scope channel]b[bdot#]_[bdot angle]
+Note: there are two shots for each angle, but the polarity should be flipped as I tested
+both orientations for error analysis purposes
