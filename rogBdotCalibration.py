@@ -24,6 +24,8 @@ format of 'data' is [time, c1, c2, c3, c4] = [t, pearson, rog1, rog2, bdot]
 def loadData(filename):
     folder = spl.filefolder(filename)
     # file format is [date]/s[shot#]/c[channel#]/b[bdot#]/_/[bdot orientation]
+    # e.g 102323s5c2b5_90 for rog1 data (c2) on 10-23-23's shot 5 (s5) w/ 
+    # bdot 5 (b5) rotated 90 degrees (_90)
     # 'dateshot' holds date and shot, and 'bdot' holds bdot# and orientation
     name = filename.split('/')[-1].split('.')[0]    # filename without path
     (dateshot, bdot) = name.split('c')  # pieces either side of channel# 
