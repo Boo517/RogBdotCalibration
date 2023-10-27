@@ -18,11 +18,11 @@ filepath = getfile()
 this function opens a file select dialog through Tkinter and returns 
 the path to the selected file
 """
-def getfile():
+def getfile(prompt):
     root = Tkinter.Tk()
     root.after(100, root.focus_force)
     root.after(200,root.withdraw)    
-    filepath = tkFileDialog.askopenfilename(parent=root,title='Pick a file')    
+    filepath = tkFileDialog.askopenfilename(parent=root,title=prompt)    
     return filepath 
 
 #%%
