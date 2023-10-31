@@ -10,7 +10,19 @@ Created on Mon Oct 23 13:51:09 2023
 IMPORTS
 """
 import scopePlottingLib as spl
+import matplotlib.pyplot as plt
 import numpy as np
+
+#%%
+"""
+EXPERIMENTAL VALUES
+"""
+# attenuator on pearson coil
+pearson_dB = 19.82
+pearson = 100  # [A/V] from 0.01 V/A as labelled
+# attenuators on rogowskis, from Ann's code (and scopePlotting)
+rog1_dB = 19.82
+rog2_dB = 19.49
 
 #%%
 """
@@ -35,7 +47,7 @@ def loadData(filename):
     data = np.genfromtxt(folder+dateshot+'c1'+bdot+'.csv', skip_header=6, 
                          delimiter=',', usecols=(3, 4))
     # expand data array so all channels can fit
-    # though each file has its own time column, they're all the same in reality
+    # though each file has its own time column, they're all the same 
     # so only need space for 3 remaining data columns
     data = np.pad(data, ((0,0),(0,3)), constant_values=np.nan)
     # first two columns are time and c1, already obtained from file1
@@ -61,6 +73,25 @@ data_0 = loadData(file_0)
 file_90 = spl.getfile("90 degree")
 data_90 = loadData(file_90)
 folder = spl.filefolder(file_0)
+
+#%%
+"""
+PLOTTING
+"""
+labels = ["times [s]", "pearson [raw]", 
+          "rog1 [raw]", "rog2 [raw]", "bdot [raw]"]
+# raw values
+fig, (ax1, ax2) = plt.subplots(2,1)
+fig.suptitle("Raw Plots")
+ax1.set_title("bdot 0 degrees")
+ax2.set_title("bdot 90 degrees")
+for channel in range(1, 5):
+    ax1.plot(data_0[:,0], data_0[:,channel], label=labels[channel])
+    ax2.plot(data_90[:,0], data_90[:,channel], label=labels[channel])
+ax1.set_xlabel(labels[0])
+ax2.set_xlabel(labels[0])
+ax1.legend()
+ax2.legend()
 
     
         
