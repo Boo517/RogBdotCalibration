@@ -23,6 +23,10 @@ pearson = 100  # [A/V] from 0.01 V/A as labelled
 # attenuators on rogowskis, from Ann's code (and scopePlotting)
 rog1_dB = 19.82
 rog2_dB = 19.49
+attenuation = [0, pearson_dB, rog1_dB, rog2_dB, 0]    
+
+# TODO: get dimensions of coil for magnetic field + make sure eqn works
+# for our setup (magnetostatics holds?Not a full loop? long?)
 
 #%%
 """
@@ -60,6 +64,7 @@ def loadData(filename):
         data[:, channel] = col
     return data
 
+
 #%%
 """
 FILE SELECT/LOAD
@@ -69,29 +74,58 @@ FILE SELECT/LOAD
 # 0 degree gives bdot values, and 90 degree gives an idea of error bounds
 # as 90 degree bdot should have no signal
 file_0 = spl.getfile("0 degree")
-data_0 = loadData(file_0)
+raw_0 = loadData(file_0)
 file_90 = spl.getfile("90 degree")
-data_90 = loadData(file_90)
+raw_90 = loadData(file_90)
 folder = spl.filefolder(file_0)
 
 #%%
 """
-PLOTTING
+PLOTTING AND SCHEMING AND CALCULATING
 """
-labels = ["times [s]", "pearson [raw]", 
-          "rog1 [raw]", "rog2 [raw]", "bdot [raw]"]
-# raw values
-fig, (ax1, ax2) = plt.subplots(2,1)
-fig.suptitle("Raw Plots")
-ax1.set_title("bdot 0 degrees")
-ax2.set_title("bdot 90 degrees")
-for channel in range(1, 5):
-    ax1.plot(data_0[:,0], data_0[:,channel], label=labels[channel])
-    ax2.plot(data_90[:,0], data_90[:,channel], label=labels[channel])
-ax1.set_xlabel(labels[0])
-ax2.set_xlabel(labels[0])
-ax1.legend()
-ax2.legend()
 
+def plotBoth(data_0, data_90, labels, title):
+    fig, (ax1, ax2) = plt.subplots(2,1)
+    fig.suptitle(title)
+    ax1.set_title("bdot 0 degrees")
+    ax2.set_title("bdot 90 degrees")
+    for channel in range(1, 5):
+        ax1.plot(data_0[:,0], data_0[:,channel], label=labels[channel])
+        ax2.plot(data_90[:,0], data_90[:,channel], label=labels[channel])
+    ax1.set_xlabel(labels[0])
+    ax2.set_xlabel(labels[0])
+    ax1.legend()
+    ax2.legend()
+
+# raw values
+raw_labels = ["times [s]", "pearson [raw]", 
+          "rog1 [raw]", "rog2 [raw]", "bdot [raw]"]
+plotBoth(raw_0, raw_90, raw_labels, "Raw Plots")
+
+# de-attenuate signals
+deatten_0 = raw_0[:,:]
+deatten_90 = raw_90[:,:]
+for channel in range(1,4):
+    deatten_0[:, channel] = spl.deAttenV(deatten_0[:, channel], 
+                                         attenuation[channel])
+    deatten_90[:, channel] = spl.deAttenV(deatten_90[:, channel], 
+                                         attenuation[channel])
+deatten_labels = ["times [s]", "pearson [V]", 
+          "rog1 [V]", "rog2 [V]", "bdot [V]"]
+plotBoth(deatten_0, deatten_90, deatten_labels, "De-attenuated Signals")
+
+# integrate d/dts 
+integrated_0 = deatten_0[:,:]
+integrated_90 = deatten_90[:,:]
+for channel in range(2,5):
+    integrated_0[:, channel] = spl.cumtrapz(integrated_0[:, 0], 
+                                            integrated_0[:, channel])
+    integrated_90[:, channel] = spl.cumtrapz(integrated_90[:, 0], 
+                                            integrated_90[:, channel])
+integrated_labels = ["times [s]", "pearson [V]", 
+          "rog1 [V*s]", "rog2 [V*s]", "bdot [V*s]"]
+plotBoth(integrated_0, integrated_90, integrated_labels, "Integrated Voltages")
+    
+    
     
         
