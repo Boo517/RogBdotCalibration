@@ -75,6 +75,7 @@ FILE SELECT/LOAD
 # as 90 degree bdot should have no signal
 file_0 = spl.getfile("0 degree")
 raw_0 = loadData(file_0)
+
 file_90 = spl.getfile("90 degree")
 raw_90 = loadData(file_90)
 folder = spl.filefolder(file_0)
@@ -97,6 +98,10 @@ def plotBoth(data_0, data_90, labels, title):
     ax1.legend()
     ax2.legend()
 
+#%%
+"""
+RAW SIGNALS
+"""
 # raw values
 raw_labels = ["times [s]", "pearson [raw]", 
           "rog1 [raw]", "rog2 [raw]", "bdot [raw]"]
@@ -114,18 +119,57 @@ deatten_labels = ["times [s]", "pearson [V]",
           "rog1 [V]", "rog2 [V]", "bdot [V]"]
 plotBoth(deatten_0, deatten_90, deatten_labels, "De-attenuated Signals")
 
+#%%
+"""
+INTEGRATION
+"""
 # integrate d/dts 
 integrated_0 = deatten_0[:,:]
 integrated_90 = deatten_90[:,:]
 for channel in range(2,5):
     integrated_0[:, channel] = spl.cumtrapz(integrated_0[:, 0], 
                                             integrated_0[:, channel])
+    # TODO: should bdot integration be skipped for 90?
     integrated_90[:, channel] = spl.cumtrapz(integrated_90[:, 0], 
                                             integrated_90[:, channel])
 integrated_labels = ["times [s]", "pearson [V]", 
           "rog1 [V*s]", "rog2 [V*s]", "bdot [V*s]"]
 plotBoth(integrated_0, integrated_90, integrated_labels, "Integrated Voltages")
+# NOTE: integrated signals have a VERY small amplitude, as the time we're
+# integrating over is very short
+#%%
+"""
+OBTAINING CONSTANTS
+"""
+scaled_0 = integrated_0[:,:]
+scaled_90 = integrated_90[:,:]
+# multiply pearson by its constant to get current from voltage
+scaled_0[:,1] = scaled_0[:,1]*pearson
+scaled_90[:,1] = scaled_90[:,1]*pearson
+
+nchannels = integrated_0.shape[1]   # #of channels = #of columns
+# first rows are constants, second rows are stdev for an extra check
+constants_0 = np.ones((2, nchannels))    
+constants_90 = constants_0[:,:]
+
+# integrated signal needs to be multiplied by a constant to match real current
+# so, obtain this constant by dividing the current by the integrated signal
+# integrated [V*s] * C [A/(V*s)] = current [A] -> C = current/integrated
+# this breaks down for current == 0, so create a mask to skip these
+# and in fact, small number/small number gives numerical error, so 
+# only pick places where the signal is > 25% of max
+time = scaled_0[:,0]
+pearson_0 = scaled_0[:,1]
+pearson_90 = scaled_90[:,1]
+signal_mask_0 = abs(pearson_0) >= .25*max(pearson_0)
+for channel in range(2, 4):
+    scale = pearson_0[signal_mask_0]/(scaled_0[:, channel][signal_mask_0]) 
+    constants_0[0, channel] = np.mean(scale[np.logical_not(np.isnan(scale))])
+    print("constant {}: {}, stdev={}".format(
+        channel, constants_0[0,channel], np.std(scale)))
     
-    
+scaled_labels = ["times [s]", "pearson [V]", 
+          "rog1 [V]", "rog2 [V]", "bdot [V]"]
+plotBoth(integrated_0, integrated_0*constants_0[0,:], scaled_labels, "gwagwa")
     
         
